@@ -5,6 +5,7 @@ const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
+var router = require('express').Router();
 
 const app = express();
 
@@ -16,19 +17,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 
-
-app.get('/', 
-(req, res) => {
+app.get('/', (req, res) => {
   res.render('index');
 });
 
-app.get('/create', 
-(req, res) => {
+app.get('/create', (req, res) => {
   res.render('index');
 });
 
-app.get('/links', 
-(req, res, next) => {
+app.get('/links', (req, res, next) => {
   models.Links.getAll()
     .then(links => {
       res.status(200).send(links);
@@ -38,8 +35,7 @@ app.get('/links',
     });
 });
 
-app.post('/links', 
-(req, res, next) => {
+app.post('/links', (req, res, next) => {
   var url = req.body.url;
   if (!models.Links.isValidUrl(url)) {
     // send back a 404 if link is not valid
@@ -78,8 +74,17 @@ app.post('/links',
 // Write your authentication routes here
 /************************************************************/
 
+// router.post('/signup', events.initialize);
 
 
+
+app.get('/signup', (req, res) => {
+  //send req to somewhere (models)
+  res.render('login');
+});
+app.post('/signup', (req, res) => {
+  //DO SOMETHING
+});
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
