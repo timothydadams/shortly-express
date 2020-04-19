@@ -73,18 +73,103 @@ app.post('/links', (req, res, next) => {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+//ROUTER gives us separation of concerns for url endpoints (not needed here in this sprint)
+    //provides clean file structure
 
-// router.post('/signup', events.initialize);
+//user must sign up (user posts req with username and pw)
+//server receveives req and hashes pw before storing in DB
+//user then logs in with username/pw (post req to server)
+//server looks up username in db, hashes pw and compares it to stored value in DB
+    //sends 401 if they don't match
+
+//create a token that uniquely id's the user session
+  //store session token in the db
+  //attach to a response cookie to be returned to the client (set expiration dtg to limit the session)
+
+app.post('/signup', (req, res, next) => {
+  //set variables here for req.body
+  var username = req.body.username;
+  var password = req.body.password;
+
+  //check for user
+  models.Users.get({username})
+    .then( user => {
+      //if exists, redirect to signup
+      if (user) {
+        //redirect to /signup
+        throw user;
+      }
+      //create a user
+      models.Users.create({username, password});
+    })
+    .then(results=>{
+      //upgrade session / associate with user
+      return req.Sessions.update({hash: req.session.hash}, {userId: results.insertId});
+    })
+    .then(user=>{
+      res.redirect('/');
+    })
+    .catch((user)=>{
+      res.redirect('/signup');
+    })
+    //if exists, redirect to /signup
+  //create a user
+  //upgrade session / associate with user
+  //redirect user to / route
 
 
+  /* OUR ATTEMPT
+  models.Users.create(req.body)
+  // .then(res.redirect('/signup'))
+  .then(input => {
+    res.redirect(200, '/');
+  })
 
-app.get('/signup', (req, res) => {
+  .error(error => {
+      res.redirect('/signup');
+  })
+  .catch(link => {
+    res.status(200).send(link);
+  })
+*/
+});
+
+
+// app.get('/signup', (req, res) => {
+//   //send req to somewhere (models)
+//   res.render('signup');
+// });
+
+app.post('/login', (req, res, next) => {
+  models.Users.login(req.body)
+  .then(input => {
+    //if they are found in the db, compare the values
+    res.redirect('/');
+  })
+  .error(error => {
+    res.redirect('/login');
+  })
+
+  // .catch(link => {
+  //   res.status(200).send(link);
+  // })
+});
+
+
+app.get('/login', (req, res) => {
   //send req to somewhere (models)
   res.render('login');
 });
-app.post('/signup', (req, res) => {
-  //DO SOMETHING
-});
+
+
+// app.post('/signup', (req, res) => { //signup should create an account
+//   //how & where to we pass information
+
+// });
+
+// app.post('/login', (req, res) => { //login to the middleware auth file
+//   //stuff
+// });
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
@@ -100,6 +185,7 @@ app.get('/:code', (req, res, next) => {
         throw new Error('Link does not exist');
       }
       return models.Clicks.create({ linkId: link.id });
+
     })
     .tap(link => {
       return models.Links.update(link, { visits: link.visits + 1 });
